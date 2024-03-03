@@ -1,33 +1,50 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const socketio = require('socket.io');
+const cors = require('cors');
 const http = require('http');
+const socketio = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const io = socketio(server, {
+  cors: {
+    origin: "*", // Adjust according to your frontend's origin for security
+    methods: ["GET", "POST"]
+  }
+});
 
+// Middleware
+app.use(cors()); // Enable CORS for all requests
+app.use(express.json()); // Parse JSON bodies
+
+// Models
+require('./models/User');
+require('./models/Message');
+
+// Routes
 const chatRoutes = require('./routes/chatRoutes');
-
-// Assuming the addUser, removeUser, getUser functions are correctly implemented
+app.use('/api/chat', chatRoutes);
+app.use('/api/users', require('./routes/userRoutes'));
+// Util functions
 const { addUser, removeUser, getUser } = require('./utils/matchingAlgorithm');
 
-app.use(express.json());
-app.use('/api/chat', chatRoutes);
-
+// Socket.io for real-time chat
 io.on('connection', (socket) => {
-  console.log('We have a new connection!');
+  console.log('New WebSocket connection');
 
-  socket.on('join', ({ name, room }, callback) => {
-    const { error, user } = addUser({ id: socket.id, name, room });
+  socket.on('join', ({ userId, roomId }, callback) => {
+    const { error, user } = addUser({ id: socket.id, userId, roomId });
 
-    if (error) return callback(error);
+    if(error) return callback(error);
 
-    socket.join(user.room);
+    socket.join(user.roomId);
 
-    socket.emit('message', { user: 'admin', text: `${user.name}, welcome to the room ${user.room}`});
-    socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${user.name} has joined!` });
+    // Welcome current user
+    socket.emit('message', { user: 'admin', text: `${user.userId}, welcome to the room ${user.roomId}` });
+
+    // Broadcast when a user connects
+    socket.broadcast.to(user.roomId).emit('message', { user: 'admin', text: `${user.userId} has joined!` });
 
     callback();
   });
@@ -35,7 +52,7 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', (message, callback) => {
     const user = getUser(socket.id);
 
-    io.to(user.room).emit('message', { user: user.name, text: message });
+    io.to(user.roomId).emit('message', { user: user.userId, text: message });
 
     callback();
   });
@@ -43,15 +60,20 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const user = removeUser(socket.id);
 
-    if (user) {
-      io.to(user.room).emit('message', { user: 'admin', text: `${user.name} has left.` });
+    if(user) {
+      io.to(user.roomId).emit('message', { user: 'admin', text: `${user.userId} has left.` });
     }
   });
 });
 
-mongoose.connect(process.env.DB_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log(err));
+// MongoDB Connection
+mongoose.connect(process.env.DB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('MongoDB Connected'))
+.catch(err => console.error(err));
 
+// Server listen
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server has started on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

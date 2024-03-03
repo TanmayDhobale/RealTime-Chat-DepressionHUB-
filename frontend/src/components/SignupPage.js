@@ -1,40 +1,84 @@
-import React, { useState, useContext } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-function SignupPage() {
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const { signup } = useContext(AuthContext); // Assuming you add a signup method to your AuthContext
-  let Navigate = useNavigate();
+function Signup() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    age: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+
+    const handleSignUpRedirect = () => {
+        navigate('/login'); // Redirect to signup page
+    };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords don't match.");
-      return;
+    setLoading(true);
+    setError('');
+    try {
+      await axios.post('http://localhost:5000/api/users/signup', formData);
+      setLoading(false);
+      // Redirect to chat after successful signup
+      navigate('/chat');
+    } catch (err) {
+    // Check if the error message is about an existing user
+    if (err.response && err.response.data && err.response.data.message === 'User already exists') {
+        setError('User already exists. Please login or use a different username.');
+    } else {
+        // Handle other errors
+        setError('Failed to signup. Please try again.');
     }
-    // Implement signup logic here. For now, just console log and redirect.
-    console.log("Signing up:", email, username, password);
-    // Assuming signup method does something like: signup(email, username, password)
-    // On successful signup:
-   Navigate.push('/login'); // Redirect the user to login page after successful signup
+    setLoading(false);
+}
+
   };
 
   return (
-    <div>
-      <h2>Sign Up</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-        <button type="submit">Sign Up</button>
+    <div style={{ width: '300px', margin: 'auto', marginTop: '50px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+          style={{ marginBottom: '10px', padding: '8px' }}
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          style={{ marginBottom: '10px', padding: '8px' }}
+        />
+        <input
+          type="text"
+          name="age"
+          placeholder="Age"
+          value={formData.age}
+          onChange={handleChange}
+          style={{ marginBottom: '10px', padding: '8px' }}
+        />
+        
+        <button type="submit" disabled={loading} style={{ padding: '8px' }}>
+          {loading ? 'Signing Up...' : 'Sign Up'}
+        </button>
+        <button type="button" onClick={handleSignUpRedirect} style={{ padding: '8px' }}>
+                    log in 
+                </button>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
     </div>
   );
 }
 
-export default SignupPage;
+export default Signup;
