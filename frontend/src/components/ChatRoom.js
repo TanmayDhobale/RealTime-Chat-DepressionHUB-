@@ -11,10 +11,11 @@ function ChatRoom() {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    // You should configure this URL
+    // Configure this URL as needed
     socket = io('http://localhost:5000');
 
-    socket.emit('join', { name: user.name, room }, (error) => {
+    // Use optional chaining to safely access user.name
+    socket.emit('join', { name: user?.name, room }, (error) => {
       if (error) {
         alert(error);
       }
@@ -24,17 +25,17 @@ function ChatRoom() {
       socket.disconnect();
       socket.off();
     };
-  }, [room, user.name]);
+  }, [room, user?.name]); // Depend on user?.name to automatically handle null users
 
   useEffect(() => {
     socket.on('message', (message) => {
-      setMessages([...messages, message]);
+      setMessages((prevMessages) => [...prevMessages, message]);
     });
 
     return () => {
       socket.off('message');
     };
-  }, [messages]);
+  }, []); // Removed `messages` from the dependency array
 
   const sendMessage = (e) => {
     e.preventDefault();
