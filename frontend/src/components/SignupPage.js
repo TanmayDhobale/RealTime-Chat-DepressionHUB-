@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useHistory } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 
 function SignupPage() {
@@ -8,7 +8,7 @@ function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { signup } = useContext(AuthContext); // Assuming you add a signup method to your AuthContext
-  let history = useHistory();
+  let Navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +20,7 @@ function SignupPage() {
     console.log("Signing up:", email, username, password);
     // Assuming signup method does something like: signup(email, username, password)
     // On successful signup:
-    history.push('/login'); // Redirect the user to login page after successful signup
+   Navigate.push('/login'); // Redirect the user to login page after successful signup
   };
 
   return (

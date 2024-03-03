@@ -9,6 +9,8 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 const chatRoutes = require('./routes/chatRoutes');
+
+// Assuming the addUser, removeUser, getUser functions are correctly implemented
 const { addUser, removeUser, getUser } = require('./utils/matchingAlgorithm');
 
 app.use(express.json());
@@ -20,7 +22,7 @@ io.on('connection', (socket) => {
   socket.on('join', ({ name, room }, callback) => {
     const { error, user } = addUser({ id: socket.id, name, room });
 
-    if(error) return callback(error);
+    if (error) return callback(error);
 
     socket.join(user.room);
 
@@ -41,13 +43,13 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const user = removeUser(socket.id);
 
-    if(user) {
+    if (user) {
       io.to(user.room).emit('message', { user: 'admin', text: `${user.name} has left.` });
     }
   });
 });
 
-mongoose.connect(process.env.DB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.DB_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.log(err));
 

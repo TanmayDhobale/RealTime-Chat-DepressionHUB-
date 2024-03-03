@@ -1,12 +1,13 @@
 import React, { useState, useContext } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
 import { AuthContext } from '../contexts/AuthContext';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login } = useContext(AuthContext);
-  let history = useHistory();
+  let history = useNavigate ();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

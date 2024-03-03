@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
 import { AuthContext } from '../contexts/AuthContext';
 
 function UserInterestsForm() {
   const [selectedInterests, setSelectedInterests] = useState([]);
   const { user, setUserInterests } = useContext(AuthContext); // Assuming you have a method to set interests in your context
-  let history = useHistory();
+  let history =  useNavigate();
 
   const interests = ["Music", "Gaming", "Technology", "Sports", "Books"]; // Example interests
 
